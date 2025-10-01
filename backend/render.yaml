@@ -14,7 +14,7 @@ services:
       - key: PORT
         value: 5000
       - key: FRONTEND_URL
-        sync: false
+        value: https://imarticus-lms.netlify.app
       - key: RAZORPAY_KEY_ID
         value: rzp_test_1hvQh7HTjEfHCo
       - key: RAZORPAY_KEY_SECRET
