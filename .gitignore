@@ -41,3 +41,6 @@ uploads/
 # Misc
 .cache
 .temp
+
+# Local Netlify folder
+.netlify
