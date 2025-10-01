@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: imarticus-lms-backend
+    env: node
+    region: singapore
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        value: mongodb+srv://vinaywbackup_db_user:vinayjain@priject.6tsvkwd.mongodb.net/imarticus-lms?retryWrites=true&w=majority&appName=Priject
+      - key: PORT
+        value: 5000
+      - key: FRONTEND_URL
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        value: rzp_test_1hvQh7HTjEfHCo
+      - key: RAZORPAY_KEY_SECRET
+        value: 77GV69Z4HNFS28RW1TH8g89n
+      - key: RAZORPAY_WEBHOOK_SECRET
+        value: iamdevtinder
