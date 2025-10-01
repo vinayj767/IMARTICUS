@@ -1,0 +1,501 @@
+.lms-page {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.lms-navbar {
+  background: linear-gradient(135deg, #0d6157 0%, #0a4d45 100%);
+  padding: 1rem 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.lms-navbar h5 {
+  font-weight: 600;
+}
+
+.lms-navbar .btn-link {
+  text-decoration: none;
+  color: #fff !important;
+  font-weight: 500;
+}
+
+.lms-navbar .btn-link:hover {
+  color: #d0d0d0 !important;
+}
+
+/* Course Header Section */
+.course-header-section {
+  background: white;
+  border-bottom: 1px solid #dee2e6;
+  padding: 2rem 0 0 0;
+}
+
+.course-main-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #212529;
+  margin-bottom: 0.5rem;
+}
+
+.course-subtitle {
+  font-size: 1.1rem;
+  color: #6c757d;
+  margin-bottom: 0;
+}
+
+/* Tabs */
+.lms-tabs {
+  border-bottom: 2px solid #dee2e6;
+  margin-top: 1.5rem;
+}
+
+.lms-tabs .nav-link {
+  border: none;
+  background: none;
+  color: #6c757d;
+  font-weight: 500;
+  font-size: 1rem;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.lms-tabs .nav-link:hover {
+  color: #0d6157;
+  border-bottom-color: #0d6157;
+}
+
+.lms-tabs .nav-link.active {
+  color: #0d6157;
+  border-bottom-color: #0d6157;
+  font-weight: 600;
+}
+
+/* Tab Content Section */
+.tab-content-section {
+  background: #f8f9fa;
+  min-height: calc(100vh - 200px);
+}
+
+/* Description Tab */
+.description-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.description-content h3 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #212529;
+  margin-bottom: 1rem;
+}
+
+.description-content h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #212529;
+  margin-bottom: 1rem;
+}
+
+.description-content .lead {
+  font-size: 1.1rem;
+  color: #495057;
+  line-height: 1.6;
+}
+
+.learning-outcomes {
+  list-style: none;
+  padding: 0;
+}
+
+.learning-outcomes li {
+  padding: 0.75rem 0;
+  padding-left: 2rem;
+  position: relative;
+}
+
+.learning-outcomes li:before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #0d6157;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.feature-card {
+  display: flex;
+  align-items: start;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #0d6157;
+}
+
+.feature-icon {
+  font-size: 2rem;
+  min-width: 40px;
+}
+
+.course-info-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  top: 20px;
+}
+
+.course-info-card h5 {
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #0d6157;
+}
+
+.info-item {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+/* Instructors Tab */
+.instructor-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.instructor-card h4 {
+  font-weight: 700;
+  color: #212529;
+  margin-bottom: 0.5rem;
+}
+
+.instructor-card img {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+}
+
+.instructor-stats {
+  margin-top: 1rem;
+}
+
+.instructor-stats .badge {
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+/* FAQ Tab */
+.accordion-item {
+  border: none;
+  background: white;
+  margin-bottom: 1rem;
+  border-radius: 8px !important;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.accordion-button {
+  background: white;
+  color: #212529;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.accordion-button:not(.collapsed) {
+  background: #0d6157;
+  color: white;
+  box-shadow: none;
+}
+
+.accordion-button:focus {
+  box-shadow: none;
+  border: none;
+}
+
+.accordion-button::after {
+  filter: invert(0);
+}
+
+.accordion-button:not(.collapsed)::after {
+  filter: invert(1);
+}
+
+.accordion-body {
+  padding: 1.5rem;
+  line-height: 1.6;
+  color: #495057;
+}
+
+/* Curriculum Tab - Existing Styles */
+.lms-container {
+  background: #fff;
+}
+
+.sidebar {
+  background: #f8f9fa;
+  min-height: calc(100vh - 80px);
+  border-right: 1px solid #e0e0e0;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  padding: 1.5rem;
+  background: white;
+  border-bottom: 2px solid #0d6157;
+}
+
+.sidebar-header h5 {
+  font-weight: 600;
+  color: #212529;
+  margin-bottom: 0.5rem;
+}
+
+.modules-list {
+  padding: 1rem;
+}
+
+.module-item {
+  margin-bottom: 0.75rem;
+}
+
+.module-header {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid #e0e0e0;
+}
+
+.module-header:hover {
+  background: #0d6157;
+  color: white;
+  transform: translateX(5px);
+}
+
+.module-header.active {
+  background: #0d6157;
+  color: white;
+}
+
+.module-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.module-icon {
+  font-size: 0.8rem;
+}
+
+.lessons-list {
+  margin-top: 0.5rem;
+  padding-left: 1rem;
+}
+
+.lesson-item {
+  display: flex;
+  align-items: start;
+  padding: 0.75rem;
+  background: white;
+  margin-bottom: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid #e9ecef;
+}
+
+.lesson-item:hover {
+  background: #f8f9fa;
+  transform: translateX(5px);
+  border-color: #0d6157;
+}
+
+.lesson-item.active {
+  background: #e6f7f5;
+  border-color: #0d6157;
+}
+
+.lesson-icon {
+  font-size: 0.7rem;
+  margin-right: 0.75rem;
+  margin-top: 0.25rem;
+  color: #0d6157;
+}
+
+.lesson-info {
+  flex: 1;
+}
+
+.lesson-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #212529;
+  margin-bottom: 0.25rem;
+}
+
+.lesson-duration {
+  font-size: 0.75rem;
+  color: #6c757d;
+}
+
+.lesson-has-doc {
+  font-size: 0.75rem;
+  color: #0d6157;
+  margin-top: 0.25rem;
+}
+
+.main-content {
+  padding: 0;
+  background: white;
+}
+
+.video-container {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%; /* 16:9 Aspect Ratio */
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.video-container > div,
+.video-container > iframe,
+.video-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.lesson-details {
+  padding: 2rem;
+}
+
+.breadcrumb {
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.lesson-details .lesson-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #212529;
+  margin-bottom: 1rem;
+}
+
+.lesson-description {
+  color: #6c757d;
+  line-height: 1.6;
+}
+
+.document-section {
+  margin-top: 2rem;
+}
+
+.document-icon {
+  font-size: 2.5rem;
+}
+
+.summary-box {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border-left: 4px solid #0d6157;
+}
+
+.summary-content {
+  color: #495057;
+  line-height: 1.8;
+  font-size: 0.95rem;
+  white-space: pre-wrap;
+}
+
+.no-lesson-selected {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 500px;
+  padding: 3rem;
+}
+
+/* Responsive Design */
+@media (max-width: 991px) {
+  .sidebar {
+    min-height: auto;
+    border-right: none;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .course-main-title {
+    font-size: 1.5rem;
+  }
+
+  .course-subtitle {
+    font-size: 1rem;
+  }
+
+  .lms-tabs .nav-link {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .video-container {
+    padding-top: 75%;
+  }
+
+  .lesson-details {
+    padding: 1.5rem;
+  }
+
+  .instructor-card img {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .course-main-title {
+    font-size: 1.25rem;
+  }
+
+  .lms-tabs .nav-link {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .lesson-details {
+    padding: 1rem;
+  }
+
+  .description-content {
+    padding: 1rem;
+  }
+
+  .instructor-card {
+    padding: 1rem;
+  }
+}
+
+/* Hover effect for course cards */
+.hover-card {
+  transition: all 0.3s ease;
+  border: none !important;
+}
+
+.hover-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+}

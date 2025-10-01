@@ -1,0 +1,197 @@
+.payment-page {
+  min-height: 100vh;
+  background: #f5f7fa;
+  padding: 3rem 0;
+}
+
+.payment-card {
+  background-color: white;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.course-info-section {
+  background: #ffffff;
+  border-right: 1px solid #e9ecef;
+  color: #333;
+  padding: 2.5rem 2rem;
+}
+
+.course-info-section h2 {
+  color: #0d6157;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.course-image {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.course-features {
+  margin-top: 1.5rem;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e9ecef;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.feature:last-child {
+  border-bottom: none;
+}
+
+.feature .icon {
+  font-size: 1.5rem;
+}
+
+.price-section {
+  background: linear-gradient(135deg, #0d6157 0%, #0a4d44 100%);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 10px;
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.price-label {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin-bottom: 0.5rem;
+}
+
+.price {
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 0.5rem 0;
+}
+
+.price-note {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.payment-form-section {
+  padding: 2.5rem 2rem;
+  background: #ffffff;
+}
+
+.payment-form-section h2 {
+  color: #0d6157;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  font-weight: 500;
+  color: #555;
+  margin-bottom: 0.5rem;
+}
+
+.form-control {
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  border-color: #0d6157;
+  box-shadow: 0 0 0 0.2rem rgba(13, 97, 87, 0.25);
+}
+
+.payment-summary {
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 10px;
+}
+
+.payment-summary hr {
+  margin: 1rem 0;
+}
+
+.btn-success {
+  background-color: #0d6157;
+  border: none;
+  border-radius: 10px;
+  padding: 1rem;
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+  background-color: #0a4d44;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(13, 97, 87, 0.3);
+}
+
+.btn-success:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.payment-note {
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.back-link .btn-link {
+  color: #666;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.back-link .btn-link:hover {
+  color: #0d6157;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .payment-page {
+    padding: 2rem 0;
+  }
+
+  .course-info-section,
+  .payment-form-section {
+    padding: 2rem 1.5rem;
+  }
+
+  .price {
+    font-size: 2.5rem;
+  }
+
+  .feature {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .payment-card {
+    border-radius: 10px;
+    margin: 0 1rem;
+  }
+
+  .course-info-section,
+  .payment-form-section {
+    padding: 1.5rem 1rem;
+  }
+
+  .price {
+    font-size: 2rem;
+  }
+}
