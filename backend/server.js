@@ -54,12 +54,22 @@ app.use('/api/courses', require('./routes/courseRoutes'));
 app.use('/api/payment', require('./routes/paymentRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 
+// Log registered routes in development
+if (process.env.NODE_ENV !== 'production') {
+  console.log('📋 Registered routes:');
+  console.log('   - /api/auth/*');
+  console.log('   - /api/courses/*');
+  console.log('   - /api/payment/*');
+  console.log('   - /api/admin/* (including /api/admin/summarize-document)');
+}
+
 // Health check route
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     message: 'Imarticus LMS API is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    version: '1.0.1'
   });
 });
 
