@@ -21,3 +21,4 @@ services:
         value: 77GV69Z4HNFS28RW1TH8g89n
       - key: RAZORPAY_WEBHOOK_SECRET
         value: iamdevtinder
+      # Azure OpenAI variables are configured in Render Dashboard Environment tab

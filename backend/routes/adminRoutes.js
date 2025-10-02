@@ -46,7 +46,19 @@ async function callAzureOpenAI(prompt) {
     const deployment = process.env.AZURE_OPENAI_CHATGPT_DEPLOYMENT;
     const apiVersion = process.env.AZURE_OPENAI_API_VERSION;
 
+    // Validate environment variables
+    if (!endpoint || !apiKey || !deployment || !apiVersion) {
+      throw new Error('Azure OpenAI environment variables not properly configured');
+    }
+
     const url = `${endpoint}openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`;
+
+    console.log('Calling Azure OpenAI:', {
+      endpoint,
+      deployment,
+      apiVersion,
+      hasApiKey: !!apiKey
+    });
 
     const response = await axios.post(url, {
       messages: [
@@ -64,7 +76,12 @@ async function callAzureOpenAI(prompt) {
 
     return response.data.choices[0].message.content;
   } catch (error) {
-    console.error('Azure OpenAI Error:', error.response?.data || error.message);
+    console.error('Azure OpenAI Error Details:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data
+    });
     throw error;
   }
 }
@@ -262,11 +279,27 @@ ${pdfText.substring(0, 4000)}`;
       }
     });
   } catch (error) {
-    console.error('Error summarizing document:', error);
+    console.error('Error summarizing document:', {
+      message: error.message,
+      stack: error.stack,
+      response: error.response?.data
+    });
+    
+    // Provide more specific error message
+    let errorMessage = 'Error summarizing document';
+    if (error.response?.status === 401) {
+      errorMessage = 'Azure OpenAI authentication failed. Please check API key.';
+    } else if (error.response?.status === 404) {
+      errorMessage = 'Azure OpenAI deployment not found. Please check deployment name.';
+    } else if (error.message.includes('environment variables')) {
+      errorMessage = 'Azure OpenAI is not properly configured on the server.';
+    }
+    
     res.status(500).json({
       success: false,
-      message: 'Error summarizing document',
-      error: error.message
+      message: errorMessage,
+      error: error.message,
+      details: error.response?.data || null
     });
   }
 });
