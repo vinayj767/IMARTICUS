@@ -5,6 +5,7 @@ const cors = require('cors');
 const path = require('path');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const { connectRedis } = require('./config/redis');
 
 const app = express();
 
@@ -20,9 +21,22 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// CORS configuration
+// CORS configuration - Allow both production and development
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: function(origin, callback) {
+    const allowedOrigins = [
+      'https://imarticus-lms.netlify.app',
+      'http://localhost:3000',
+      'http://127.0.0.1:3000'
+    ];
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all origins for now, can restrict later
+    }
+  },
   credentials: true
 }));
 app.use(express.json());
@@ -42,11 +56,17 @@ mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
-.then(() => console.log('✅ MongoDB Connected Successfully'))
+.then(() => console.log(' MongoDB Connected Successfully'))
 .catch((err) => {
-  console.error('❌ MongoDB Connection Error:', err);
+  console.error(' MongoDB Connection Error:', err);
   process.exit(1);
 });
+
+// Redis Connection (Optional - will run without Redis)
+// Disabled for now to clean up console
+// connectRedis().catch(err => {
+//   console.warn('⚠️  Redis not available. Running without cache.');
+// });
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
@@ -56,7 +76,7 @@ app.use('/api/admin', require('./routes/adminRoutes'));
 
 // Log registered routes in development
 if (process.env.NODE_ENV !== 'production') {
-  console.log('📋 Registered routes:');
+  console.log(' Registered routes:');
   console.log('   - /api/auth/*');
   console.log('   - /api/courses/*');
   console.log('   - /api/payment/*');
@@ -93,6 +113,8 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📚 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(` Server running on port ${PORT}`);
+  console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(` PDF Summarization Route: /api/admin/summarize-document`);
+  console.log(` Deployed: ${new Date().toISOString()}`);
 });

@@ -499,3 +499,55 @@
   transform: translateY(-5px);
   box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
 }
+
+/* Progress Notification */
+.progress-notification {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+  z-index: 10000;
+  animation: slideInRight 0.3s ease, fadeOut 0.3s ease 2.7s;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: translateX(400px);
+  }
+}
+
+/* Completed Lesson Indicator */
+.lesson-item.completed {
+  background-color: #e8f5e9 !important;
+  border-left: 4px solid #28a745 !important;
+}
+
+.lesson-item.completed::after {
+  content: "✓";
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #28a745;
+  font-weight: bold;
+  font-size: 1.2rem;
+}

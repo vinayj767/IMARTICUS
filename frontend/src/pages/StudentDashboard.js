@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAllCourses } from '../services/api';
+import { getAllCourses, getProfile } from '../services/api';
 import './StudentDashboard.css';
 import logo from '../assests/logo.svg';
 
@@ -19,11 +19,34 @@ const StudentDashboard = () => {
     // Get logged-in user
     const userData = localStorage.getItem('user');
     if (userData) {
-      setUser(JSON.parse(userData));
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+      // Fetch user's enrolled courses with progress
+      fetchUserProfile(parsedUser.id);
     }
     
     fetchCourses();
   }, []);
+
+  const fetchUserProfile = async (userId) => {
+    try {
+      console.log('Fetching profile for userId:', userId);
+      const response = await getProfile(userId);
+      console.log('Profile response:', response.data);
+      
+      if (response.data.success) {
+        const userProfile = response.data.user;
+        // Extract enrolled courses with their details
+        const enrolled = userProfile.enrolledCourses || [];
+        console.log('Enrolled courses from API:', enrolled);
+        setEnrolledCourses(enrolled);
+        console.log('Enrolled courses loaded:', enrolled.length);
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      console.error('Error details:', error.response?.data);
+    }
+  };
 
   const fetchCourses = async () => {
     try {
@@ -31,9 +54,6 @@ const StudentDashboard = () => {
       const response = await getAllCourses();
       const allCourses = response.data.data || [];
       setCourses(allCourses);
-      
-      // Simulate enrolled courses (first 2 courses)
-      setEnrolledCourses(allCourses.slice(0, 2));
     } catch (error) {
       console.error('Error fetching courses:', error);
     } finally {
@@ -68,103 +88,96 @@ const StudentDashboard = () => {
       
       {enrolledCourses.length > 0 ? (
         <div className="activity-section">
-          {enrolledCourses.map((course) => (
-            <div key={course._id} className="activity-card">
-              <div className="activity-image-placeholder">
-                <img 
-                  src={getThumbnailUrl(course.thumbnail)} 
-                  alt={course.title}
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80';
-                  }}
-                />
-              </div>
-              <div className="activity-info">
-                <h3>{course.title}</h3>
-                <p className="batch-info">Batch: Default_Batch_{Date.now()}_{course.title}</p>
-                <div className="progress-section">
-                  <div className="progress-bar">
-                    <div className="progress-fill" style={{ width: '100%' }}></div>
-                  </div>
-                  <span className="progress-text">100% ✓</span>
+          {enrolledCourses.map((enrollment) => {
+            const course = enrollment.courseId;
+            const completionPercentage = enrollment.completionPercentage || 0;
+            
+            return (
+              <div key={course._id} className="activity-card">
+                <div className="activity-image-placeholder">
+                  <img 
+                    src={getThumbnailUrl(course.thumbnail)} 
+                    alt={course.title}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80';
+                    }}
+                  />
                 </div>
+                <div className="activity-info">
+                  <h3>{course.title}</h3>
+                  <p className="batch-info">
+                    Enrolled: {new Date(enrollment.enrolledAt).toLocaleDateString()}
+                  </p>
+                  <div className="progress-section">
+                    <div className="progress-bar">
+                      <div 
+                        className="progress-fill" 
+                        style={{ width: `${completionPercentage}%` }}
+                      ></div>
+                    </div>
+                    <span className="progress-text">
+                      {completionPercentage}% {completionPercentage === 100 ? '✓' : ''}
+                    </span>
+                  </div>
+                </div>
+                <button 
+                  className="continue-btn"
+                  onClick={() => handleCourseClick(course._id)}
+                >
+                  {completionPercentage === 0 ? 'Start' : 'Continue'}
+                </button>
               </div>
-              <button 
-                className="continue-btn"
-                onClick={() => handleCourseClick(course._id)}
-              >
-                Continue
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
-        <div className="empty-state">
-          <p>No enrolled courses yet. Explore courses to get started!</p>
+        <div className="no-courses-message">
+          <p>You haven't enrolled in any courses yet.</p>
+          <button 
+            className="explore-courses-btn"
+            onClick={() => setActiveView('explore')}
+          >
+            Explore Courses
+          </button>
         </div>
       )}
-
-      <h2 className="section-title mt-5">All Courses</h2>
-      
-      <div className="all-courses-section">
-        {courses.length > 0 ? (
-          courses.map((course) => (
-            <div key={course._id} className="activity-card">
-              <div className="activity-image-placeholder">
-                <img 
-                  src={getThumbnailUrl(course.thumbnail)} 
-                  alt={course.title}
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80';
-                  }}
-                />
-              </div>
-              <div className="activity-info">
-                <h3>{course.title}</h3>
-                <p className="batch-info">Batch: Default_Batch_{Date.now()}_{course.title}</p>
-                <div className="progress-section">
-                  <div className="progress-bar">
-                    <div className="progress-fill" style={{ width: '100%' }}></div>
-                  </div>
-                  <span className="progress-text">100% ✓</span>
-                </div>
-              </div>
-              <button 
-                className="continue-btn"
-                onClick={() => handleCourseClick(course._id)}
-              >
-                Continue
-              </button>
-            </div>
-          ))
-        ) : (
-          <div className="empty-state">
-            <p>No courses available</p>
-          </div>
-        )}
-      </div>
     </div>
   );
 
-  // My Groups View
+  // My Groups View (Shows Enrolled Courses)
   const MyGroupsView = () => (
     <div className="dashboard-content">
       {!selectedGroup ? (
         <>
           <h2 className="section-title">MY GROUPS</h2>
-          <div className="groups-list">
-            {enrolledCourses.map((course) => (
-              <div 
-                key={course._id} 
-                className="group-item"
-                onClick={() => setSelectedGroup(course)}
+          {enrolledCourses.length > 0 ? (
+            <div className="groups-list">
+              {enrolledCourses.map((enrollment) => {
+                const course = enrollment.courseId;
+                return (
+                  <div 
+                    key={course._id} 
+                    className="group-item"
+                    onClick={() => setSelectedGroup(enrollment)}
+                  >
+                    <span className="group-name">{course.title}</span>
+                    <span className="group-progress">{enrollment.completionPercentage || 0}% Complete</span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="no-courses-message">
+              <p>You haven't enrolled in any courses yet.</p>
+              <button 
+                className="explore-courses-btn"
+                onClick={() => setActiveView('explore')}
               >
-                <span className="group-name">{course.title}</span>
-              </div>
-            ))}
-          </div>
+                Explore Courses
+              </button>
+            </div>
+          )}
         </>
       ) : (
         <div className="group-detail">
@@ -174,8 +187,8 @@ const StudentDashboard = () => {
           
           <div className="group-header">
             <img 
-              src={getThumbnailUrl(selectedGroup.thumbnail)} 
-              alt={selectedGroup.title}
+              src={getThumbnailUrl(selectedGroup.courseId.thumbnail)} 
+              alt={selectedGroup.courseId.title}
               className="group-cover"
               onError={(e) => {
                 e.target.onerror = null;
@@ -183,20 +196,24 @@ const StudentDashboard = () => {
               }}
             />
             <div className="group-header-text">
-              <h2>{selectedGroup.title}</h2>
-              <p className="group-code">Group Code: {Math.floor(100000 + Math.random() * 900000)}</p>
+              <h2>{selectedGroup.courseId.title}</h2>
+              <p className="group-code">
+                Enrolled: {new Date(selectedGroup.enrolledAt).toLocaleDateString()}
+              </p>
+              <p className="group-progress-detail">
+                Progress: {selectedGroup.completionPercentage || 0}% Complete
+              </p>
             </div>
           </div>
 
           <div className="group-permission">
-            <span>Permission: Admins Only</span>
-            <button className="leave-group-btn">Leave Group</button>
+            <span>Your Course</span>
           </div>
 
           <div className="group-sections">
             <div 
               className="group-section-card"
-              onClick={() => handleCourseClick(selectedGroup._id)}
+              onClick={() => handleCourseClick(selectedGroup.courseId._id)}
             >
               <div className="section-icon">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">

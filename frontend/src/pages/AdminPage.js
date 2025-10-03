@@ -237,7 +237,7 @@ const AdminPage = () => {
 
               {/* Instructions */}
               <div className="instructions mt-5">
-                <h5 className="mb-3">📋 Instructions</h5>
+                <h5 className="mb-3"> Instructions</h5>
                 <ul className="list-unstyled">
                   <li className="mb-2">
                     <span className="text-success fw-bold">1.</span> Select the course, module, and lesson

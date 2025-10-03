@@ -20,22 +20,63 @@
   width: 100%;
   padding: 0.75rem 1rem;
   margin-bottom: 0.5rem;
-  background: none;
+  background-color: transparent;
   border: none;
   border-radius: 8px;
   text-align: left;
-  cursor: pointer;
+  color: #495057;
+  font-weight: 500;
   transition: all 0.3s ease;
-  font-size: 1rem;
 }
 
 .menu-item:hover {
-  background-color: #f8f9fa;
+  background-color: #e9ecef;
+  color: #212529;
 }
 
 .menu-item.active {
-  background-color: #0d6157;
+  background-color: #0d6efd;
   color: white;
+}
+
+/* Analytics Dashboard Specific Styles */
+.analytics-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: none;
+  border-radius: 12px;
+}
+
+.analytics-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+.analytics-card .display-4 {
+  font-weight: bold;
+  font-size: 2.5rem;
+}
+
+.chart-container {
+  padding: 1rem 0;
+}
+
+.progress-bar-item {
+  padding: 0.5rem 0;
+}
+
+.progress-bar-item:last-child {
+  margin-bottom: 0 !important;
+}
+
+.card-header {
+  border-top-left-radius: 12px !important;
+  border-top-right-radius: 12px !important;
+  font-weight: 600;
+}
+
+.table-hover tbody tr:hover {
+  background-color: #f0f8ff;
+  cursor: pointer;
 }
 
 .main-admin-content {

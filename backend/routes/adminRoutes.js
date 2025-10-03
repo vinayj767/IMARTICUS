@@ -6,6 +6,10 @@ const fs = require('fs');
 const pdfParse = require('pdf-parse');
 const axios = require('axios');
 const Course = require('../models/Course');
+const User = require('../models/User');
+const Payment = require('../models/Payment');
+const { verifyToken, isAdmin } = require('../middleware/auth');
+const { cacheMiddleware } = require('../config/redis');
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, '../uploads');
@@ -249,19 +253,19 @@ router.post('/summarize-document', async (req, res) => {
 
 Analyze the following document and provide a comprehensive, well-structured summary with these sections:
 
-📋 OVERVIEW (2-3 sentences)
+ OVERVIEW (2-3 sentences)
 - Briefly describe what this document covers
 
-🎯 KEY CONCEPTS (3-5 bullet points)
+ KEY CONCEPTS (3-5 bullet points)
 - List the main concepts and topics covered
 
-💡 IMPORTANT POINTS (3-5 bullet points)
+ IMPORTANT POINTS (3-5 bullet points)
 - Highlight the most important information students should remember
 
-📚 PRACTICAL APPLICATIONS
+ PRACTICAL APPLICATIONS
 - Explain how this knowledge can be applied
 
-🎓 LEARNING OUTCOMES
+ LEARNING OUTCOMES
 - What students will be able to do after understanding this material
 
 Document Text:
@@ -418,4 +422,294 @@ router.delete('/courses/:id', async (req, res) => {
   }
 });
 
+// ============================================
+// ANALYTICS DASHBOARD ENDPOINT (Protected)
+// ============================================
+
+// Temporarily disable Redis caching
+router.get('/analytics', verifyToken, isAdmin, async (req, res) => {
+  try {
+    console.log('📊 Fetching analytics data...');
+
+    // 1. CORE STATS - Total counts
+    const [totalStudents, totalCourses, totalEnrollments] = await Promise.all([
+      User.countDocuments({ role: 'student' }),
+      Course.countDocuments(),
+      User.aggregate([
+        { $unwind: '$enrolledCourses' },
+        { $count: 'total' }
+      ])
+    ]);
+
+    const enrollmentCount = totalEnrollments.length > 0 ? totalEnrollments[0].total : 0;
+
+    // 2. COURSE POPULARITY - Top 5 most enrolled courses
+    const coursePopularity = await User.aggregate([
+      { $unwind: '$enrolledCourses' },
+      { 
+        $group: {
+          _id: '$enrolledCourses.courseId',
+          enrollments: { $sum: 1 }
+        }
+      },
+      { $sort: { enrollments: -1 } },
+      { $limit: 5 },
+      {
+        $lookup: {
+          from: 'courses',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'courseInfo'
+        }
+      },
+      { $unwind: '$courseInfo' },
+      {
+        $project: {
+          _id: 1,
+          courseName: '$courseInfo.title',
+          enrollments: 1
+        }
+      }
+    ]);
+
+    // 3. STUDENT PROGRESS - Calculate average completion per course
+    const studentProgress = await User.aggregate([
+      { $unwind: '$enrolledCourses' },
+      {
+        $lookup: {
+          from: 'courses',
+          localField: 'enrolledCourses.courseId',
+          foreignField: '_id',
+          as: 'courseDetails'
+        }
+      },
+      { $unwind: '$courseDetails' },
+      {
+        $project: {
+          courseId: '$enrolledCourses.courseId',
+          courseName: '$courseDetails.title',
+          totalLessons: {
+            $sum: {
+              $map: {
+                input: '$courseDetails.modules',
+                as: 'module',
+                in: { $size: '$$module.lessons' }
+              }
+            }
+          },
+          completedLessons: {
+            $cond: {
+              if: { $isArray: '$enrolledCourses.progress' },
+              then: { $size: '$enrolledCourses.progress' },
+              else: 0
+            }
+          }
+        }
+      },
+      {
+        $group: {
+          _id: '$courseId',
+          courseName: { $first: '$courseName' },
+          totalLessons: { $first: '$totalLessons' },
+          avgCompletedLessons: { $avg: '$completedLessons' }
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          courseName: 1,
+          totalLessons: 1,
+          avgCompletedLessons: { $round: ['$avgCompletedLessons', 1] },
+          completionPercentage: {
+            $round: [
+              {
+                $multiply: [
+                  {
+                    $cond: {
+                      if: { $eq: ['$totalLessons', 0] },
+                      then: 0,
+                      else: { $divide: ['$avgCompletedLessons', '$totalLessons'] }
+                    }
+                  },
+                  100
+                ]
+              },
+              1
+            ]
+          }
+        }
+      },
+      { $sort: { completionPercentage: -1 } }
+    ]);
+
+    // 4. RECENT ACTIVITY - Last 5 registered students
+    const recentStudents = await User.find({ role: 'student' })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .select('name email createdAt enrolledCourses')
+      .lean();
+
+    const recentActivity = recentStudents.map(student => ({
+      _id: student._id,
+      name: student.name,
+      email: student.email,
+      registeredAt: student.createdAt,
+      enrolledCoursesCount: student.enrolledCourses?.length || 0
+    }));
+
+    // 5. ENROLLMENT TRENDS - Last 7 days
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const enrollmentTrends = await User.aggregate([
+      { $unwind: '$enrolledCourses' },
+      {
+        $match: {
+          'enrolledCourses.enrolledAt': { $gte: sevenDaysAgo }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: '%Y-%m-%d',
+              date: '$enrolledCourses.enrolledAt'
+            }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } },
+      {
+        $project: {
+          date: '$_id',
+          enrollments: '$count',
+          _id: 0
+        }
+      }
+    ]);
+
+    // 6. REVENUE DATA (if Payment model exists)
+    let totalRevenue = 0;
+    let recentPayments = [];
+
+    try {
+      const payments = await Payment.aggregate([
+        { $match: { status: { $in: ['success', 'completed'] } } },
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+      ]);
+      
+      totalRevenue = payments.length > 0 ? payments[0].total : 0;
+
+      recentPayments = await Payment.find({ status: { $in: ['success', 'completed'] } })
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .populate('userId', 'name email')
+        .populate('courseId', 'title')
+        .select('amount createdAt')
+        .lean();
+    } catch (error) {
+      console.log('Payment model not found or error:', error.message);
+    }
+
+    // Prepare response
+    const analyticsData = {
+      success: true,
+      timestamp: new Date().toISOString(),
+      data: {
+        coreStats: {
+          totalStudents,
+          totalCourses,
+          totalEnrollments: enrollmentCount,
+          totalRevenue
+        },
+        coursePopularity: coursePopularity.map(course => ({
+          courseId: course._id,
+          courseName: course.courseName,
+          enrollments: course.enrollments
+        })),
+        studentProgress: studentProgress.map(progress => ({
+          courseId: progress._id,
+          courseName: progress.courseName,
+          totalLessons: progress.totalLessons,
+          avgCompletedLessons: progress.avgCompletedLessons,
+          completionPercentage: progress.completionPercentage
+        })),
+        recentActivity,
+        enrollmentTrends,
+        recentPayments: recentPayments.map(payment => ({
+          amount: payment.amount,
+          student: payment.userId?.name || 'Unknown',
+          course: payment.courseId?.title || 'Unknown',
+          date: payment.createdAt
+        }))
+      }
+    };
+
+    console.log('✅ Analytics data fetched successfully');
+    res.json(analyticsData);
+
+  } catch (error) {
+    console.error('❌ Error fetching analytics:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching analytics data',
+      error: error.message
+    });
+  }
+});
+
+// Get detailed student progress
+router.get('/student-progress', verifyToken, isAdmin, async (req, res) => {
+  try {
+    console.log('Fetching detailed student progress...');
+
+    const students = await User.find({ role: 'student' })
+      .select('name email enrolledCourses')
+      .populate('enrolledCourses.courseId', 'title')
+      .lean();
+
+    const studentProgressList = students.map(student => {
+      const enrollments = student.enrolledCourses || [];
+      const courses = enrollments.map(enrollment => ({
+        courseId: enrollment.courseId?._id,
+        courseName: enrollment.courseId?.title || 'Unknown Course',
+        completionPercentage: enrollment.completionPercentage || 0,
+        enrolledAt: enrollment.enrolledAt,
+        progressCount: enrollment.progress?.length || 0
+      }));
+
+      return {
+        studentId: student._id,
+        studentName: student.name,
+        studentEmail: student.email,
+        totalEnrollments: enrollments.length,
+        averageCompletion: enrollments.length > 0
+          ? Math.round(
+              enrollments.reduce((sum, e) => sum + (e.completionPercentage || 0), 0) / enrollments.length
+            )
+          : 0,
+        courses: courses
+      };
+    });
+
+    // Sort by average completion (descending)
+    studentProgressList.sort((a, b) => b.averageCompletion - a.averageCompletion);
+
+    res.json({
+      success: true,
+      data: studentProgressList
+    });
+
+  } catch (error) {
+    console.error('Error fetching student progress:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching student progress',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
+

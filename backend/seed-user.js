@@ -32,16 +32,16 @@ async function seedUsers() {
       useNewUrlParser: true,
       useUnifiedTopology: true
     });
-    console.log('✅ Connected to MongoDB');
+    console.log(' Connected to MongoDB');
 
     // Clear existing users
     await User.deleteMany({});
-    console.log('🗑️  Cleared existing users');
+    console.log('  Cleared existing users');
 
     // Insert test users
     const users = await User.insertMany(testUsers);
-    console.log('✅ Test users created successfully');
-    console.log('\n📋 Test User Credentials:\n');
+    console.log(' Test users created successfully');
+    console.log('\n Test User Credentials:\n');
     
     console.log('1. Student Account:');
     console.log('   Email: student@test.com');
@@ -58,14 +58,14 @@ async function seedUsers() {
     console.log('   Password: admin123');
     console.log('   Role: admin\n');
 
-    console.log('✨ Users seeded successfully!');
+    console.log(' Users seeded successfully!');
     
     // Close connection
     await mongoose.connection.close();
-    console.log('👋 Connection closed');
+    console.log(' Connection closed');
     process.exit(0);
   } catch (error) {
-    console.error('❌ Error seeding users:', error);
+    console.error(' Error seeding users:', error);
     process.exit(1);
   }
 }

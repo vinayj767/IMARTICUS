@@ -34,6 +34,25 @@ const userSchema = new mongoose.Schema({
     paymentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Payment'
+    },
+    progress: [{
+      moduleId: {
+        type: mongoose.Schema.Types.ObjectId
+      },
+      lessonId: {
+        type: mongoose.Schema.Types.ObjectId
+      },
+      completed: {
+        type: Boolean,
+        default: false
+      },
+      completedAt: {
+        type: Date
+      }
+    }],
+    completionPercentage: {
+      type: Number,
+      default: 0
     }
   }],
   isActive: {

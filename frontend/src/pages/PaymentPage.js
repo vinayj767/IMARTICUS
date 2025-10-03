@@ -7,22 +7,42 @@ const PaymentPage = () => {
   const navigate = useNavigate();
   const { courseId } = useParams();
   const [course, setCourse] = useState(null);
+  const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     userName: '',
     userEmail: '',
-    courseId: courseId || '68dd46a07f865f13c0fbda24' // Get from URL or fallback
+    userId: '',
+    courseId: courseId || '68dd46a07f865f13c0fbda24',
+    amount: 0
   });
   const [loading, setLoading] = useState(false);
   const [courseLoading, setCourseLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Fetch course details
+  // Get logged-in user and fetch course details
   useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+      setFormData(prev => ({
+        ...prev,
+        userName: parsedUser.name,
+        userEmail: parsedUser.email,
+        userId: parsedUser.id
+      }));
+    }
+
     const fetchCourse = async () => {
       try {
         setCourseLoading(true);
         const response = await getCourseById(courseId || '68dd46a07f865f13c0fbda24');
-        setCourse(response.data.data);
+        const courseData = response.data.data;
+        setCourse(courseData);
+        setFormData(prev => ({
+          ...prev,
+          amount: courseData.price || 50000
+        }));
       } catch (error) {
         console.error('Error fetching course:', error);
         setError('Failed to load course details');
@@ -70,18 +90,19 @@ const PaymentPage = () => {
       // Check if test mode
       if (orderResponse.data.testMode) {
         // Test mode - simulate payment success
-        alert('🎉 Test Mode: Payment Successful!\\n\\nYou will now be redirected to the course.');
+        alert('🎉 Test Mode: Payment Successful!\n\nYou will now be redirected to your dashboard.');
         
         // Verify payment in test mode
         await verifyPayment({
           razorpay_order_id: orderData.orderId,
           razorpay_payment_id: 'test_payment_' + Date.now(),
-          razorpay_signature: 'test_signature'
+          razorpay_signature: 'test_signature',
+          userId: formData.userId
         });
 
-        // Redirect to LMS
+        // Redirect to student dashboard
         setTimeout(() => {
-          navigate('/lms');
+          navigate('/student-dashboard');
         }, 1000);
         return;
       }
@@ -105,15 +126,16 @@ const PaymentPage = () => {
         order_id: orderData.orderId,
         handler: async function (response) {
           try {
-            // Verify payment
+            // Verify payment and enroll user
             await verifyPayment({
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature
+              razorpay_signature: response.razorpay_signature,
+              userId: formData.userId
             });
 
-            alert('Payment Successful! Redirecting to course...');
-            navigate('/lms');
+            alert('Payment Successful! You have been enrolled in the course.');
+            navigate('/student-dashboard');
           } catch (error) {
             setError('Payment verification failed');
           }
@@ -296,7 +318,7 @@ const PaymentPage = () => {
 
                     <div className="payment-note mt-3 text-center">
                       <small className="text-muted">
-                        🔒 Secure payment powered by Razorpay
+                         Secure payment powered by Razorpay
                       </small>
                     </div>
                   </form>

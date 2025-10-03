@@ -55,7 +55,14 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          <Route path="/admin-upload" element={<AdminDashboard />} />
+          <Route 
+            path="/admin-upload" 
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } 
+          />
         </Routes>
       </div>
     </Router>

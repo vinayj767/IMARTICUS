@@ -9,11 +9,40 @@ const api = axios.create({
   }
 });
 
+// Add JWT token to all requests
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Handle token expiration
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token expired or invalid
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Auth APIs
 export const register = (data) => api.post('/auth/register', data);
 export const login = (data) => api.post('/auth/login', data);
 export const getProfile = (userId) => api.get(`/auth/profile/${userId}`);
 export const enrollInCourse = (data) => api.post('/auth/enroll', data);
+export const updateProgress = (data) => api.post('/auth/progress', data);
 
 // Course APIs
 export const getAllCourses = () => api.get('/courses');
@@ -38,5 +67,9 @@ export const uploadDocument = (formData) =>
     }
   });
 export const summarizeDocument = (data) => api.post('/admin/summarize-document', data);
+
+// Analytics API
+export const getAnalytics = () => api.get('/admin/analytics');
+export const getStudentProgress = () => api.get('/admin/student-progress');
 
 export default api;

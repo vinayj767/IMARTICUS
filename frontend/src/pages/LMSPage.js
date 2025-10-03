@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ReactPlayer from 'react-player';
-import { getCourseById, getAllCourses, summarizeDocument } from '../services/api';
+import { getCourseById, getAllCourses, summarizeDocument, updateProgress } from '../services/api';
 import './LMSPage.css';
 
 const LMSPage = () => {
@@ -18,19 +18,41 @@ const LMSPage = () => {
   const [summary, setSummary] = useState('');
   const [showSummary, setShowSummary] = useState(false);
   const [showCourseList, setShowCourseList] = useState(!courseId);
+  const [completedLessons, setCompletedLessons] = useState(new Set());
+  const [currentCompletion, setCurrentCompletion] = useState(0);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  const [checkingEnrollment, setCheckingEnrollment] = useState(true);
+  const [hasFetchedProgress, setHasFetchedProgress] = useState(false);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     // Get logged-in user from localStorage
     const userData = localStorage.getItem('user');
     if (userData) {
-      setUser(JSON.parse(userData));
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+      
+      // Load course after user is set
+      if (courseId) {
+        fetchCourse(parsedUser);
+      } else {
+        fetchAllCourses();
+        setCheckingEnrollment(false);
+      }
+    } else {
+      // No user logged in
+      if (courseId) {
+        fetchCourse(null);
+      } else {
+        fetchAllCourses();
+        setCheckingEnrollment(false);
+      }
     }
     
-    if (courseId) {
-      fetchCourse();
-    } else {
-      fetchAllCourses();
-    }
+    // Cleanup function to reset state when course changes
+    return () => {
+      setHasFetchedProgress(false);
+    };
   }, [courseId]);
 
   const fetchAllCourses = async () => {
@@ -45,13 +67,85 @@ const LMSPage = () => {
     }
   };
 
-  const fetchCourse = async () => {
+  const loadUserProgress = useCallback(async (userParam) => {
+    // Prevent duplicate calls
+    if (hasFetchedProgress) {
+      console.log('⚠️ Progress already fetched, skipping...');
+      return;
+    }
+    
+    try {
+      setCheckingEnrollment(true);
+      
+      if (!userParam) {
+        setIsEnrolled(false);
+        setCheckingEnrollment(false);
+        setHasFetchedProgress(true);
+        return;
+      }
+      
+      // If admin, skip enrollment check
+      if (userParam.role === 'admin') {
+        setIsEnrolled(true);
+        setCheckingEnrollment(false);
+        setHasFetchedProgress(true);
+        console.log('✅ Admin access granted');
+        return;
+      }
+      
+      // For students, fetch latest profile (only once)
+      console.log('🔍 Fetching enrollment status for student...');
+      const { getProfile } = await import('../services/api');
+      const response = await getProfile(userParam.id);
+      
+      if (response.data.success) {
+        const userProfile = response.data.user;
+        const enrollment = userProfile.enrolledCourses?.find(
+          ec => ec.courseId?._id === courseId || ec.courseId === courseId
+        );
+        
+        if (enrollment) {
+          setIsEnrolled(true);
+          setCurrentCompletion(enrollment.completionPercentage || 0);
+          // Mark completed lessons
+          const completed = new Set();
+          enrollment.progress?.forEach(p => {
+            completed.add(`${p.moduleId}-${p.lessonId}`);
+          });
+          setCompletedLessons(completed);
+          console.log('✅ Loaded existing progress:', enrollment.completionPercentage + '%');
+        } else {
+          setIsEnrolled(false);
+          console.log('❌ User not enrolled in this course');
+        }
+      }
+      
+      setHasFetchedProgress(true);
+    } catch (error) {
+      console.error('Error loading user progress:', error);
+      setIsEnrolled(false);
+      setHasFetchedProgress(true);
+    } finally {
+      setCheckingEnrollment(false);
+    }
+  }, [courseId, hasFetchedProgress]);
+
+  const fetchCourse = useCallback(async (userParam = null) => {
     try {
       setLoading(true);
       const response = await getCourseById(courseId);
       const courseData = response.data.data;
       setCourse(courseData);
       setShowCourseList(false);
+      
+      // Load user's existing progress
+      const currentUser = userParam || user;
+      if (currentUser) {
+        await loadUserProgress(currentUser);
+      } else {
+        setCheckingEnrollment(false);
+        setIsEnrolled(false);
+      }
       
       // Select first lesson by default
       if (courseData.modules && courseData.modules.length > 0) {
@@ -67,12 +161,13 @@ const LMSPage = () => {
       }
     } catch (error) {
       console.error('Error fetching course:', error);
+      setCheckingEnrollment(false);
     } finally {
       setLoading(false);
     }
-  };
+  }, [courseId, user, loadUserProgress]);
 
-  const handleLessonClick = (lesson, moduleId, moduleTitle) => {
+  const handleLessonClick = async (lesson, moduleId, moduleTitle) => {
     setSelectedLesson({
       ...lesson,
       moduleId,
@@ -80,6 +175,54 @@ const LMSPage = () => {
     });
     setShowSummary(false);
     setSummary('');
+    
+    // Mark lesson as complete when clicked
+    await markLessonComplete(moduleId, lesson._id);
+  };
+
+  const markLessonComplete = async (moduleId, lessonId) => {
+    if (!user || !courseId) {
+      console.log('User or courseId not available');
+      return;
+    }
+
+    // Check if already completed
+    const lessonKey = `${moduleId}-${lessonId}`;
+    if (completedLessons.has(lessonKey)) {
+      console.log('Lesson already marked as complete');
+      return;
+    }
+
+    try {
+      console.log('Marking lesson complete:', { courseId, moduleId, lessonId });
+      const response = await updateProgress({
+        userId: user.id,
+        courseId: courseId,
+        moduleId: moduleId,
+        lessonId: lessonId
+      });
+
+      if (response.data.success) {
+        console.log('Progress updated:', response.data);
+        setCompletedLessons(prev => new Set([...prev, lessonKey]));
+        setCurrentCompletion(response.data.data.completionPercentage);
+        
+        // Show success notification
+        const notification = document.createElement('div');
+        notification.className = 'progress-notification';
+        notification.innerHTML = `
+          <i class="bi bi-check-circle-fill me-2"></i>
+          Lesson completed! Progress: ${response.data.data.completionPercentage}%
+        `;
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
+      }
+    } catch (error) {
+      console.error('Error updating progress:', error);
+      if (error.response?.status === 400 && error.response?.data?.message?.includes('already completed')) {
+        setCompletedLessons(prev => new Set([...prev, lessonKey]));
+      }
+    }
   };
 
   const handleSummarize = async () => {
@@ -305,8 +448,25 @@ const LMSPage = () => {
         {/* Course Header with Tabs */}
         <div className="course-header-section">
           <div className="container-fluid">
-            <h2 className="course-main-title">{course.title}</h2>
-            <p className="course-subtitle">{course.description}</p>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h2 className="course-main-title mb-2">{course.title}</h2>
+                <p className="course-subtitle mb-0">{course.description}</p>
+              </div>
+              {currentCompletion > 0 && (
+                <div className="course-progress-badge">
+                  <div className="progress" style={{width: '150px', height: '30px'}}>
+                    <div 
+                      className="progress-bar progress-bar-striped progress-bar-animated bg-success" 
+                      role="progressbar" 
+                      style={{width: `${currentCompletion}%`}}
+                    >
+                      {currentCompletion}%
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
             
             {/* Navigation Tabs */}
             <ul className="nav nav-tabs lms-tabs mt-4">
@@ -438,6 +598,55 @@ const LMSPage = () => {
           )}
 
           {activeTab === 'curriculum' && (
+            <>
+              {checkingEnrollment ? (
+                <div className="text-center py-4">
+                  <div className="spinner-border spinner-border-sm text-primary" role="status">
+                    <span className="visually-hidden">Verifying...</span>
+                  </div>
+                  <p className="mt-2 mb-0 text-muted small">Verifying enrollment...</p>
+                </div>
+              ) : !isEnrolled && user?.role !== 'admin' ? (
+                <div className="container-fluid py-5">
+                  <div className="row justify-content-center">
+                    <div className="col-md-8 col-lg-6">
+                      <div className="card text-center border-warning shadow">
+                        <div className="card-body p-5">
+                          <div className="mb-4">
+                            <i className="bi bi-lock-fill text-warning" style={{fontSize: '4rem'}}></i>
+                          </div>
+                          <h3 className="card-title mb-3">Course Locked</h3>
+                          <p className="card-text text-muted mb-4">
+                            You need to enroll in this course to access the content. 
+                            Get lifetime access to all course materials, video lectures, and certificates.
+                          </p>
+                          <div className="mb-4">
+                            <h4 className="text-success">
+                              ₹{(course.price / 100).toLocaleString('en-IN')}
+                            </h4>
+                            <small className="text-muted">One-time payment</small>
+                          </div>
+                          <button 
+                            className="btn btn-success btn-lg px-5"
+                            onClick={() => navigate(`/payment/${courseId}`)}
+                          >
+                            <i className="bi bi-cart-check me-2"></i>
+                            Enroll Now
+                          </button>
+                          <div className="mt-4">
+                            <button 
+                              className="btn btn-link text-muted"
+                              onClick={() => setActiveTab('description')}
+                            >
+                              View Course Details
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
             <div className="row g-0">
               {/* Sidebar - Course Content */}
               <div className="col-lg-4 sidebar">
@@ -465,24 +674,28 @@ const LMSPage = () => {
 
                       {activeModule === module._id && (
                         <div className="lessons-list">
-                          {module.lessons.map((lesson) => (
-                            <div
-                              key={lesson._id}
-                              className={`lesson-item ${selectedLesson?._id === lesson._id ? 'active' : ''}`}
-                              onClick={() => handleLessonClick(lesson, module._id, module.title)}
-                            >
-                              <div className="lesson-icon">▶</div>
-                              <div className="lesson-info">
-                                <div className="lesson-title">{lesson.title}</div>
-                                {lesson.duration && (
-                                  <div className="lesson-duration">{lesson.duration}</div>
-                                )}
-                                {lesson.document && (
-                                  <div className="lesson-has-doc">📄 Document Available</div>
-                                )}
+                          {module.lessons.map((lesson) => {
+                            const lessonKey = `${module._id}-${lesson._id}`;
+                            const isCompleted = completedLessons.has(lessonKey);
+                            return (
+                              <div
+                                key={lesson._id}
+                                className={`lesson-item ${selectedLesson?._id === lesson._id ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}
+                                onClick={() => handleLessonClick(lesson, module._id, module.title)}
+                              >
+                                <div className="lesson-icon">{isCompleted ? '✓' : '▶'}</div>
+                                <div className="lesson-info">
+                                  <div className="lesson-title">{lesson.title}</div>
+                                  {lesson.duration && (
+                                    <div className="lesson-duration">{lesson.duration}</div>
+                                  )}
+                                  {lesson.document && (
+                                    <div className="lesson-has-doc">📄 Document Available</div>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -595,6 +808,8 @@ const LMSPage = () => {
                 )}
               </div>
             </div>
+              )}
+            </>
           )}
 
           {activeTab === 'instructors' && (

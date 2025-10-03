@@ -45,9 +45,15 @@ const AuthPage = () => {
       }
 
       if (response.data.success) {
-        // Store user data in localStorage
+        // Store user data AND JWT token in localStorage
         const user = response.data.user;
+        const token = response.data.token;
+        
         localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem('token', token);
+        
+        console.log('✅ Login successful! User:', user.name, 'Role:', user.role);
+        console.log('✅ JWT Token stored in localStorage');
         
         // Redirect based on user role
         if (user.role === 'admin') {

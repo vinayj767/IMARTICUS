@@ -373,17 +373,17 @@ async function seedDatabase() {
       useNewUrlParser: true,
       useUnifiedTopology: true
     });
-    console.log('✅ Connected to MongoDB');
+    console.log(' Connected to MongoDB');
 
     // Clear existing courses
     await Course.deleteMany({});
-    console.log('🗑️  Cleared existing courses');
+    console.log('  Cleared existing courses');
 
     // Insert all courses
     const createdCourses = await Course.insertMany(courses);
-    console.log(`✅ Created ${createdCourses.length} courses successfully!`);
+    console.log(` Created ${createdCourses.length} courses successfully!`);
     
-    console.log('\n📚 Courses by Category:');
+    console.log('\n Courses by Category:');
     const categories = ['finance', 'technology', 'analytics', 'marketing', 'management'];
     categories.forEach(cat => {
       const count = createdCourses.filter(c => c.category === cat).length;
@@ -394,10 +394,10 @@ async function seedDatabase() {
     
     // Close connection
     await mongoose.connection.close();
-    console.log('👋 Connection closed');
+    console.log(' Connection closed');
     process.exit(0);
   } catch (error) {
-    console.error('❌ Error seeding database:', error);
+    console.error(' Error seeding database:', error);
     process.exit(1);
   }
 }

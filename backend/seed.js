@@ -172,10 +172,10 @@ async function seedDatabase() {
 
     // Insert sample course
     const course = await Course.create(sampleCourse);
-    console.log('✅ Sample course created successfully');
-    console.log('📚 Course ID:', course._id);
-    console.log('📝 Course Title:', course.title);
-    console.log('📦 Modules:', course.modules.length);
+    console.log(' Sample course created successfully');
+    console.log(' Course ID:', course._id);
+    console.log(' Course Title:', course.title);
+    console.log(' Modules:', course.modules.length);
     
     let totalLessons = 0;
     course.modules.forEach(module => {
