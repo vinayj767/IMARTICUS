@@ -426,8 +426,8 @@ router.delete('/courses/:id', async (req, res) => {
 // ANALYTICS DASHBOARD ENDPOINT (Protected)
 // ============================================
 
-// Temporarily disable Redis caching
-router.get('/analytics', verifyToken, isAdmin, async (req, res) => {
+// Analytics route with 30-minute cache
+router.get('/analytics', verifyToken, isAdmin, cacheMiddleware(1800), async (req, res) => {
   try {
     console.log('📊 Fetching analytics data...');
 
@@ -659,8 +659,8 @@ router.get('/analytics', verifyToken, isAdmin, async (req, res) => {
   }
 });
 
-// Get detailed student progress
-router.get('/student-progress', verifyToken, isAdmin, async (req, res) => {
+// Get detailed student progress with 15-minute cache
+router.get('/student-progress', verifyToken, isAdmin, cacheMiddleware(900), async (req, res) => {
   try {
     console.log('Fetching detailed student progress...');
 

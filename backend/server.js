@@ -56,17 +56,16 @@ mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
-.then(() => console.log(' MongoDB Connected Successfully'))
+.then(() => console.log('✅ MongoDB Connected Successfully'))
 .catch((err) => {
-  console.error(' MongoDB Connection Error:', err);
+  console.error('❌ MongoDB Connection Error:', err);
   process.exit(1);
 });
 
 // Redis Connection (Optional - will run without Redis)
-// Disabled for now to clean up console
-// connectRedis().catch(err => {
-//   console.warn('⚠️  Redis not available. Running without cache.');
-// });
+connectRedis().catch(err => {
+  console.warn('⚠️  Redis not available. Running without cache.');
+});
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
